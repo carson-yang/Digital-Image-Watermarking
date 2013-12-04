@@ -31,6 +31,19 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CButton selectFile;
+	char* m_pBMPBuffer;
 public:
 	afx_msg void OnBnClickedButton2();
+private:
+	//BOOL LoadShowBMPFile(const char *pPathname);
+	//HBITMAP BufferToHBITMAP();
+	//void DrawImage(int x, int y, CDC *pDC);
+public:
+	afx_msg void OnUpdate32771(CCmdUI *pCmdUI);
+	afx_msg void OnUpdate32772(CCmdUI *pCmdUI);
+private:
+	CButton handleImage;
+public:
+	afx_msg void On32773();
+	afx_msg void On32774();
 };

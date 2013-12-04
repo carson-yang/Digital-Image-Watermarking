@@ -24,7 +24,8 @@
 #include <afxext.h>         // MFC extensions
 
 
- #include <afxdlgs.h>
+ //#include <afxdlgs.h>
+#include "ClassBanCopy.h"
 
 
 #ifndef _AFX_NO_OLE_SUPPORT

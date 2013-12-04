@@ -27,6 +27,7 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+	//afx_msg void On32773();
 };
 
 extern CImageDigitalMarkingApp theApp;

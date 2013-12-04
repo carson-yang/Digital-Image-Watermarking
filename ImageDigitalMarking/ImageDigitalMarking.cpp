@@ -15,6 +15,7 @@
 
 BEGIN_MESSAGE_MAP(CImageDigitalMarkingApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+	//ON_COMMAND(ID_32773, &CImageDigitalMarkingApp::On32773)
 END_MESSAGE_MAP()
 
 

@@ -99,8 +99,10 @@
     <None Include="res\ImageDigitalMarking.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClassBanCopy.h" />
     <ClInclude Include="ImageDigitalMarking.h" />
     <ClInclude Include="ImageDigitalMarkingDlg.h" />
+    <ClInclude Include="MD5FileCalculator.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -108,6 +110,7 @@
   <ItemGroup>
     <ClCompile Include="ImageDigitalMarking.cpp" />
     <ClCompile Include="ImageDigitalMarkingDlg.cpp" />
+    <ClCompile Include="MD5FileCalculator.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

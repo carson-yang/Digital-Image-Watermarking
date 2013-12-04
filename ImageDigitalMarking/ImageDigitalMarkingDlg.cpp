@@ -27,12 +27,19 @@ void CImageDigitalMarkingDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_BUTTON2, selectFile);
+	//DDX_Control(pDX, IDC_STATIC2, sourceBitmap);
+	//DDX_Control(pDX, IDC_STATIC1, destBitmap);
+	DDX_Control(pDX, IDC_BUTTON4, handleImage);
 }
 
 BEGIN_MESSAGE_MAP(CImageDigitalMarkingDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON2, &CImageDigitalMarkingDlg::OnBnClickedButton2)
+	ON_UPDATE_COMMAND_UI(ID_32771, &CImageDigitalMarkingDlg::OnUpdate32771)
+	ON_UPDATE_COMMAND_UI(ID_32772, &CImageDigitalMarkingDlg::OnUpdate32772)
+	ON_COMMAND(ID_32773, &CImageDigitalMarkingDlg::On32773)
+	ON_COMMAND(ID_32774, &CImageDigitalMarkingDlg::On32774)
 END_MESSAGE_MAP()
 
 
@@ -92,7 +99,7 @@ void CImageDigitalMarkingDlg::OnBnClickedButton2()
 {
 	// TODO: Add your control notification handler code here
 	// Create an instance First
-	CFileDialog fOpenDlg(TRUE, _T("bmp"), NULL, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, _T("(*.bmp)|*.bmp|*.bmp||"), this);
+	CFileDialog fOpenDlg(TRUE, _T("bmp"), NULL, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, _T("BMP Files (*.bmp)|*.bmp|All Files (*.*)|*.*||"), this);
 
 	// Initializes m_pOFN structure
 	fOpenDlg.m_pOFN->lpstrTitle=_T("BitMap File");
@@ -101,12 +108,65 @@ void CImageDigitalMarkingDlg::OnBnClickedButton2()
 
 	if(fOpenDlg.DoModal()==IDOK)
 	{
-		/*if(!ViconCamera::Instance()->LoadCamerasData((LPCTSTR)fOpenDlg.GetPathName()))
-		// LoadCamerasData(char *) returns true if file is valid and is opened and false otherwise
-		{
-			::MessageBox(NULL, _T("File Not Found or Invalid File Or No Of Cameras Zero"), _T("File NotFound"), MB_OK);
-			return;
-		}*/
-		// Do something useful here
+		// Get file path
+		CString strPathName = fOpenDlg.GetPathName();
+		
+		HDC MemDC; //device enviroment
+		MemDC = CreateCompatibleDC(0); //get DC
+		HBITMAP bit;
+		bit = (HBITMAP)LoadImage(AfxGetInstanceHandle(),strPathName,IMAGE_BITMAP,0,0,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
+		SelectObject(MemDC,bit);
+		CClientDC dc(this);
+		BitBlt(dc.m_hDC,40,40,256,256,MemDC,0,0,SRCCOPY);
 	}
+}
+
+
+void CImageDigitalMarkingDlg::OnUpdate32771(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	handleImage.SetWindowTextW(_T("嵌入水印"));
+}
+
+
+void CImageDigitalMarkingDlg::OnUpdate32772(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	handleImage.SetWindowTextW(_T("提取水印"));
+}
+
+	//generate password
+void CImageDigitalMarkingDlg::On32773()
+{
+	// TODO: Add your command handler code here
+	BROWSEINFO bi; 
+	TCHAR Buffer[512]; 
+	CString dir; 
+	//init bi start
+	bi.hwndOwner = NULL; 
+	bi.pidlRoot = NULL; 
+	bi.pszDisplayName = Buffer;//this parameter must be NoEmpty 
+	bi.lpszTitle = _T("选择密钥输出目录"); 
+	bi.ulFlags = BIF_RETURNONLYFSDIRS; 
+	bi.lpfn = NULL; 
+	bi.iImage = 0; 
+	//init bi end
+	LPITEMIDLIST pIDList = SHBrowseForFolder(&bi);//show select dialog
+	if(pIDList)//clicked OK
+	{ 
+		//get folder path to buffer
+		SHGetPathFromIDList(pIDList, Buffer); 
+		dir = Buffer; 
+
+		//generate password
+
+		//write to a disk txt file
+
+	} 
+}
+
+	//generate watermarking
+void CImageDigitalMarkingDlg::On32774()
+{
+	// TODO: Add your command handler code here
 }
