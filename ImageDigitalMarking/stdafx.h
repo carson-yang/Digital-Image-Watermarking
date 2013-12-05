@@ -25,7 +25,6 @@
 
 
  //#include <afxdlgs.h>
-#include "ClassBanCopy.h"
 
 
 #ifndef _AFX_NO_OLE_SUPPORT

@@ -6,6 +6,7 @@
 #include "ImageDigitalMarking.h"
 #include "ImageDigitalMarkingDlg.h"
 #include "afxdialogex.h"
+#include "MD5.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -135,18 +136,17 @@ void CImageDigitalMarkingDlg::OnUpdate32772(CCmdUI *pCmdUI)
 	handleImage.SetWindowTextW(_T("提取水印"));
 }
 
-	//generate password
-void CImageDigitalMarkingDlg::On32773()
+void generateFile(LPCWSTR title,LPCWSTR result, LPCWSTR fileName,std::string& content)
 {
 	// TODO: Add your command handler code here
 	BROWSEINFO bi; 
-	TCHAR Buffer[512]; 
+	TCHAR pathBuffer[512]; 
 	CString dir; 
 	//init bi start
 	bi.hwndOwner = NULL; 
 	bi.pidlRoot = NULL; 
-	bi.pszDisplayName = Buffer;//this parameter must be NoEmpty 
-	bi.lpszTitle = _T("选择密钥输出目录"); 
+	bi.pszDisplayName = pathBuffer;//this parameter must be NoEmpty 
+	bi.lpszTitle = title;
 	bi.ulFlags = BIF_RETURNONLYFSDIRS; 
 	bi.lpfn = NULL; 
 	bi.iImage = 0; 
@@ -155,18 +155,58 @@ void CImageDigitalMarkingDlg::On32773()
 	if(pIDList)//clicked OK
 	{ 
 		//get folder path to buffer
-		SHGetPathFromIDList(pIDList, Buffer); 
-		dir = Buffer; 
+		SHGetPathFromIDList(pIDList, pathBuffer); 
+		dir = pathBuffer; 
 
-		//generate password
+		//write to a disk file
+		dir.Append(CString(fileName));
+		CFile myFile;
+		CFileException fileException;
 
-		//write to a disk txt file
+		if ( !myFile.Open( dir, CFile::modeCreate |   
+			CFile::modeWrite, &fileException ) )
+		{
+			TRACE( _T("Can't open file %s, error = %u\n"),
+				dir, fileException.m_cause );
+		}	
 
+		myFile.Write(content.c_str(),content.size());
+		myFile.Flush();
+		myFile.Close();
+		AfxMessageBox(CString(result));
 	} 
+}
+
+//generate password
+void CImageDigitalMarkingDlg::On32773()
+{
+	// TODO: Add your command handler code here
+		//generate password
+		CString currentTime = CTime::GetCurrentTime().Format("%H, %M, %S, %A, %B %d, %Y");
+		std::string stdCurrent(CW2A(currentTime.GetString()));
+		MD5 md5;
+		md5.reset();
+		md5.update(stdCurrent);
+		std::string result = md5.toString();
+
+		generateFile(_T("选择密钥输出目录"),_T("生成密钥成功!"),_T("\\password.txt"),result);
+	
 }
 
 	//generate watermarking
 void CImageDigitalMarkingDlg::On32774()
 {
 	// TODO: Add your command handler code here
+	//generate watermarking
+	srand((unsigned int) time(NULL));
+	byte watermarking[100];
+	int count = 96;
+	while(count)
+	{
+		watermarking[--count] = rand() % 256;
+	}
+	watermarking[96] = '\0';
+	std::string result = MD5::bytesToHexString(watermarking,96);
+
+	generateFile(_T("选择水印输入目录"),_T("生成水印成功"),_T("\\watermarking.txt"),result);
 }

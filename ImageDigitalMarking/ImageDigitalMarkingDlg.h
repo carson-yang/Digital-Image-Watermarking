@@ -4,6 +4,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include <string>
 
 
 // CImageDigitalMarkingDlg dialog
@@ -34,7 +35,8 @@ private:
 	char* m_pBMPBuffer;
 public:
 	afx_msg void OnBnClickedButton2();
-private:
+//private:
+	//void generateFile(LPCWSTR title,LPCWSTR result, LPCWSTR fileName,std::string& content);
 	//BOOL LoadShowBMPFile(const char *pPathname);
 	//HBITMAP BufferToHBITMAP();
 	//void DrawImage(int x, int y, CDC *pDC);

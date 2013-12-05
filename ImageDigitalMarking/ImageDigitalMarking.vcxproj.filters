@@ -39,10 +39,7 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ClassBanCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MD5FileCalculator.h">
+    <ClInclude Include="MD5.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,8 +53,8 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MD5FileCalculator.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="MD5.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
