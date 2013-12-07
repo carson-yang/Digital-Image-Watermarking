@@ -7,6 +7,8 @@
 #include "ImageDigitalMarkingDlg.h"
 #include "afxdialogex.h"
 #include "MD5.h"
+#include "PasswordInput.h"
+#include <vector>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -16,12 +18,28 @@
 // CImageDigitalMarkingDlg dialog
 
 
+struct YCrCbModel 
+{
+	double Y;
+	double Cr;
+	double Cb;
+}BitMapData[EDGE_LENGTH][EDGE_LENGTH];
 
+std::vector<std::vector<double> > cvInputData;
+std::vector<std::vector<double> > cvOutputData;
+
+int permutation[SUM_MATRIX+10][SUBMATRIX+10];
 
 CImageDigitalMarkingDlg::CImageDigitalMarkingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CImageDigitalMarkingDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	//password = new char[40];
+}
+
+CImageDigitalMarkingDlg::~CImageDigitalMarkingDlg()
+{
+	//delete password;
 }
 
 void CImageDigitalMarkingDlg::DoDataExchange(CDataExchange* pDX)
@@ -41,6 +59,7 @@ BEGIN_MESSAGE_MAP(CImageDigitalMarkingDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_32772, &CImageDigitalMarkingDlg::OnUpdate32772)
 	ON_COMMAND(ID_32773, &CImageDigitalMarkingDlg::On32773)
 	ON_COMMAND(ID_32774, &CImageDigitalMarkingDlg::On32774)
+	ON_BN_CLICKED(IDC_BUTTON4, &CImageDigitalMarkingDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -112,13 +131,14 @@ void CImageDigitalMarkingDlg::OnBnClickedButton2()
 		// Get file path
 		CString strPathName = fOpenDlg.GetPathName();
 		
-		HDC MemDC; //device enviroment
-		MemDC = CreateCompatibleDC(0); //get DC
-		HBITMAP bit;
-		bit = (HBITMAP)LoadImage(AfxGetInstanceHandle(),strPathName,IMAGE_BITMAP,0,0,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
-		SelectObject(MemDC,bit);
+		myImage.Destroy();
+		myImage.Load((LPCTSTR)strPathName);
+		if (myImage.IsNull())
+			return;
 		CClientDC dc(this);
-		BitBlt(dc.m_hDC,40,40,256,256,MemDC,0,0,SRCCOPY);
+		myImage.Draw(dc.m_hDC,40,40,256,256);
+		//int w = myImage.GetWidth();
+		//int h = myImage.GetHeight();
 	}
 }
 
@@ -136,7 +156,7 @@ void CImageDigitalMarkingDlg::OnUpdate32772(CCmdUI *pCmdUI)
 	handleImage.SetWindowTextW(_T("提取水印"));
 }
 
-void generateFile(LPCWSTR title,LPCWSTR result, LPCWSTR fileName,std::string& content)
+static void generateFile(LPCWSTR title,LPCWSTR result, LPCWSTR fileName,std::string& content)
 {
 	// TODO: Add your command handler code here
 	BROWSEINFO bi; 
@@ -187,9 +207,9 @@ void CImageDigitalMarkingDlg::On32773()
 		MD5 md5;
 		md5.reset();
 		md5.update(stdCurrent);
-		std::string result = md5.toString();
+		stdCurrent = md5.toString();
 
-		generateFile(_T("选择密钥输出目录"),_T("生成密钥成功!"),_T("\\password.txt"),result);
+		generateFile(_T("选择密钥输出目录"),_T("生成密钥成功!"),_T("\\password.txt"),stdCurrent);
 	
 }
 
@@ -209,4 +229,137 @@ void CImageDigitalMarkingDlg::On32774()
 	std::string result = MD5::bytesToHexString(watermarking,96);
 
 	generateFile(_T("选择水印输入目录"),_T("生成水印成功"),_T("\\watermarking.txt"),result);
+}
+
+void CImageDigitalMarkingDlg::setPassword(CString& pass)
+{
+	//strcpy_s(this->password,32,password);
+	this->password = pass;
+}
+
+void computePertumation(CString& initPassword)
+{
+	std::string temp = CStringA(initPassword);
+	int count = SUM_MATRIX - 1;
+	MD5 md5;
+
+	do 
+	{
+		unsigned int pass = 0;
+		//sscanf_s(temp.c_str(),"%x",&pass);
+		sscanf_s(temp.c_str(),"%x",&pass);
+		srand(pass);
+		for (int i = 0; i< SUBMATRIX; ++i)
+		{
+			permutation[SUM_MATRIX - count - 1][i] = rand() % SUBMATRIX;
+		}
+		md5.reset();
+		md5.update(temp);
+		temp = md5.toString();
+	} while (count --);
+}
+
+void pertumate(int height, int width)
+{
+	int count = 0;
+	for (int x = 0; x < height; x += 8){
+		for (int y = 0; y < width; y += 8)
+		{
+			int pert = 0;
+			for (int i = 0; i< 8; ++i)
+				for (int j = 0; j< 8; ++j)
+				{
+					pert = permutation[count][i*8+j];
+					std::swap(BitMapData[x+i][y+j],BitMapData[x+pert/8][y+pert%8]);
+				}
+		}
+		count++;
+	}
+}
+
+void dePertumate(int height, int width)
+{
+	int count = 0;
+	for (int x = 0; x < height; x += 8){
+		for (int y = 0; y < width; y += 8)
+		{
+			int pert = 0;
+			for (int i = 7; i>=0; --i)
+				for (int j = 7; j>=0; --j)
+				{
+					pert = permutation[count][i*8+j];
+					std::swap(BitMapData[x+i][y+j],BitMapData[x+pert/8][y+pert%8]);
+				}
+		}
+		count++;
+	}
+}
+
+void DCT()
+{
+
+}
+
+void CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
+{
+	if (myImage.IsNull())
+	{
+		AfxMessageBox(_T("请先选择图片"));
+		return;
+	}
+	//input password
+	PasswordInput inputDialog;
+	inputDialog.pDialog = this;
+	inputDialog.DoModal();
+
+	int imageWidth = myImage.GetWidth();
+	int imageHeight = myImage.GetHeight();
+
+	memset(BitMapData,0,sizeof(BitMapData));
+	memset(permutation,0,sizeof(permutation));
+
+	byte r, g, b;
+	COLORREF pixel;
+	//RGB convert to YCrCb
+	for (int x = 0; x< imageHeight;++x)
+		for (int y = 0; y< imageWidth; ++y)
+		{
+			pixel = myImage.GetPixel(x,y);
+			r = GetRValue(pixel);
+			g = GetGValue(pixel);
+			b = GetBValue(pixel);
+			BitMapData[x][y].Y = (77.0 * r  + 150 * g  + 29 * b) / 256;
+			BitMapData[x][y].Cb = (-44.0 * r  - 87 * g  + 131 * b )/ 256 + 128;
+			BitMapData[x][y].Cr = (131.0 * r  - 110 * g  - 21 * b) / 256 + 128;
+		}
+	//compute pertumation
+	computePertumation(password);
+
+	//complete pertumation
+	pertumate(imageHeight,imageWidth);
+
+	//every block DCT
+	DCT();
+}
+
+void CImageDigitalMarkingDlg::OnBnClickedButton4()
+{
+	// TODO: Add your control notification handler code here
+
+	//common handle
+	commonBehaviorOfHandleImage();
+
+	//different handle
+	CString textContent;
+	handleImage.GetWindowText(textContent);
+	CString constContent(_T("嵌入水印"));
+	if (textContent == constContent)
+	{
+		
+	} 
+	else //提取水印
+	{
+		
+	}
+
 }

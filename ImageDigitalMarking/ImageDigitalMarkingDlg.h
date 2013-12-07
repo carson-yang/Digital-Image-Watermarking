@@ -13,7 +13,7 @@ class CImageDigitalMarkingDlg : public CDialogEx
 // Construction
 public:
 	CImageDigitalMarkingDlg(CWnd* pParent = NULL);	// standard constructor
-
+	~CImageDigitalMarkingDlg();
 // Dialog Data
 	enum { IDD = IDD_IMAGEDIGITALMARKING_DIALOG };
 
@@ -32,7 +32,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CButton selectFile;
-	char* m_pBMPBuffer;
+	//char* m_pBMPBuffer;
 public:
 	afx_msg void OnBnClickedButton2();
 //private:
@@ -45,7 +45,13 @@ public:
 	afx_msg void OnUpdate32772(CCmdUI *pCmdUI);
 private:
 	CButton handleImage;
+	CImage myImage;
+	void commonBehaviorOfHandleImage();
+	//char* password;
+	CString password;
 public:
 	afx_msg void On32773();
 	afx_msg void On32774();
+	afx_msg void OnBnClickedButton4();
+	void setPassword(CString&);
 };

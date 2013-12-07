@@ -25,6 +25,9 @@
 
 
  //#include <afxdlgs.h>
+const int EDGE_LENGTH = 300;
+const int SUBMATRIX = 64;
+const int SUM_MATRIX = 1024;
 
 
 #ifndef _AFX_NO_OLE_SUPPORT
