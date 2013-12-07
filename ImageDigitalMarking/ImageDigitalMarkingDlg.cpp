@@ -9,6 +9,7 @@
 #include "MD5.h"
 #include "PasswordInput.h"
 #include <vector>
+#include "opencv2/core/core.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -24,9 +25,6 @@ struct YCrCbModel
 	double Cr;
 	double Cb;
 }BitMapData[EDGE_LENGTH][EDGE_LENGTH];
-
-std::vector<std::vector<double> > cvInputData;
-std::vector<std::vector<double> > cvOutputData;
 
 int permutation[SUM_MATRIX+10][SUBMATRIX+10];
 
@@ -270,7 +268,7 @@ void pertumate(int height, int width)
 				for (int j = 0; j< 8; ++j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j],BitMapData[x+pert/8][y+pert%8]);
+					std::swap(BitMapData[x+i][y+j].Cb,BitMapData[x+pert/8][y+pert%8].Cb);
 				}
 		}
 		count++;
@@ -288,16 +286,48 @@ void dePertumate(int height, int width)
 				for (int j = 7; j>=0; --j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j],BitMapData[x+pert/8][y+pert%8]);
+					std::swap(BitMapData[x+i][y+j].Cb,BitMapData[x+pert/8][y+pert%8].Cb);
 				}
 		}
 		count++;
 	}
 }
 
-void DCT()
+void DCT(int height, int width,int flag)
 {
+	for (int x = 0; x < height; x += 8){
+		for (int y = 0; y < width; y += 8)
+		{
+			cv::Mat_<double> cvData(8,8);
 
+			for (int i = 0; i< 8; ++i)
+				for (int j = 0; j< 8; ++j)
+				{
+					cvData(i,j) = BitMapData[x+i][y+j].Cb;
+				}
+			
+			//DCT
+			if (flag == 0)
+			{
+				int flags = 0;
+				cv::dct(cvData,cvData,flags);
+			}
+			else//IDCT
+			{
+				int flags = cv::DCT_INVERSE;
+				cv::dct(cvData,cvData,flags);
+			}
+
+			//data store to bitmapdata
+			for (int i = 0; i< 8; ++i)
+				for (int j = 0; j< 8; ++j)
+				{
+					BitMapData[x+i][y+j].Cb = cvData(i,j);
+				}
+			
+		}
+		
+	}
 }
 
 void CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
@@ -339,7 +369,7 @@ void CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 	pertumate(imageHeight,imageWidth);
 
 	//every block DCT
-	DCT();
+	DCT(imageHeight,imageWidth,0); 
 }
 
 void CImageDigitalMarkingDlg::OnBnClickedButton4()
