@@ -245,7 +245,7 @@ void CImageDigitalMarkingDlg::setPassword(CString& pass)
 
 void CImageDigitalMarkingDlg::setWaterMarking(CString& watermark)
 {
-	this->waterMarking = watermark;
+	this->waterMark = watermark;
 }
 
 void computePertumation(CString& initPassword)
@@ -348,6 +348,13 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 		AfxMessageBox(_T("«Îœ»—°‘ÒÕº∆¨"));
 		return false;
 	}
+
+	//initialize password, watermark
+	password.Empty();
+	ASSERT(password.GetLength() == 0);
+	waterMark.Empty();
+	ASSERT(waterMark.GetLength() == 0);
+
 	//input password
 	PasswordInput inputDialog;
 	inputDialog.setMainDialog(this);
@@ -409,7 +416,7 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 		waterMarkInput.setMainDialog(this);
 		waterMarkInput.DoModal();
 
-		if (waterMarking.GetLength() == 0)
+		if (waterMark.GetLength() == 0)
 		{
 			return;
 		}

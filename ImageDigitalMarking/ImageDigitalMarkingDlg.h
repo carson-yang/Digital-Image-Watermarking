@@ -49,7 +49,7 @@ private:
 	bool commonBehaviorOfHandleImage();
 	//char* password;
 	CString password;
-	CString waterMarking;
+	CString waterMark;
 public:
 	afx_msg void On32773();
 	afx_msg void On32774();
