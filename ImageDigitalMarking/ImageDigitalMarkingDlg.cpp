@@ -37,6 +37,8 @@ struct YCrCbModel
 
 int permutation[SUM_MATRIX+10][SUBMATRIX+10];
 
+std::string RS_String; //rs error correct code string
+
 CImageDigitalMarkingDlg::CImageDigitalMarkingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CImageDigitalMarkingDlg::IDD, pParent)
 {
@@ -281,7 +283,7 @@ void pertumate(int height, int width)
 				for (int j = 0; j< 8; ++j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j].Cb,BitMapData[x+pert/8][y+pert%8].Cb);
+					std::swap(BitMapData[x+i][y+j].Cr,BitMapData[x+pert/8][y+pert%8].Cr);
 				}
 		}
 		count++;
@@ -299,7 +301,7 @@ void dePertumate(int height, int width)
 				for (int j = 7; j>=0; --j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j].Cb,BitMapData[x+pert/8][y+pert%8].Cb);
+					std::swap(BitMapData[x+i][y+j].Cr,BitMapData[x+pert/8][y+pert%8].Cr);
 				}
 		}
 		count++;
@@ -316,7 +318,7 @@ void DCT(int height, int width,int flag)
 			for (int i = 0; i< 8; ++i)
 				for (int j = 0; j< 8; ++j)
 				{
-					cvData(i,j) = BitMapData[x+i][y+j].Cb;
+					cvData(i,j) = BitMapData[x+i][y+j].Cr;
 				}
 			
 			//DCT
@@ -335,7 +337,7 @@ void DCT(int height, int width,int flag)
 			for (int i = 0; i< 8; ++i)
 				for (int j = 0; j< 8; ++j)
 				{
-					BitMapData[x+i][y+j].Cb = cvData(i,j);
+					BitMapData[x+i][y+j].Cr = cvData(i,j);
 				}
 		}
 	}
@@ -396,6 +398,171 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 	return true;
 }
 
+static inline void RS_Initialize()
+{
+
+}
+
+static void fromWaterMarkToRS_String(CString& watermark)
+{
+	RS_String.clear();
+	ASSERT(RS_String.length() == 0);
+	std::string additionString;
+	unsigned char additionStringElement = 0;
+	int count = 0;
+
+	for (int i = 0;i <watermark.GetLength(); i+= 2)
+	{
+		//hex string to byte;
+		unsigned char temp = 0;
+		std::string subTemp;
+		subTemp.push_back(static_cast<char>(watermark[i]));
+		subTemp.push_back(static_cast<char>(watermark[i+1]));
+		sscanf_s(subTemp.c_str(),"%x",&temp);
+		RS_String.push_back(temp);
+
+		//rs(127,117) only with 7 valid bit symbols
+		//so every byte's head(first) bit stored in addition string
+		if (1 == (temp >> 7))
+		{
+			additionStringElement |= 0x01;
+		}
+		additionStringElement <<= 1;
+		count++;
+		if (0 == count % 7)
+		{
+			additionStringElement >>= 1;
+			additionString.push_back(additionStringElement);
+			additionStringElement = 0;
+		}
+	}
+
+	if (0 != additionStringElement)
+	{
+		while (0 != count % 7)
+		{
+			additionStringElement <<= 1;
+			count++;
+		}
+		additionStringElement >>= 1;
+		additionString.push_back(additionStringElement);
+	}
+	//addition string
+	RS_String += additionString;
+}
+
+//Extract watermark to Show(or output to a *.txt file)
+static void fromRS_StringToWaterMark()
+{
+
+}
+
+static void RS_Encode(CString& watermark)
+{
+	fromWaterMarkToRS_String(watermark);
+
+	/* Finite Field Parameters */
+	const std::size_t field_descriptor                 =   7;
+	const std::size_t generator_polynommial_index      =   0;
+	const std::size_t generator_polynommial_root_count =  10;
+
+	/* Reed Solomon Code Parameters */
+	const std::size_t code_length = 127;
+	const std::size_t fec_length  =  10;
+	const std::size_t data_length = code_length - fec_length;
+
+	/* Instantiate Finite Field and Generator Polynomials */
+	schifra::galois::field field(field_descriptor,
+		schifra::galois::primitive_polynomial_size04,
+		schifra::galois::primitive_polynomial04);
+
+	schifra::galois::field_polynomial generator_polynomial(field);
+
+	schifra::sequential_root_generator_polynomial_creator(field,
+		generator_polynommial_index,
+		generator_polynommial_root_count,
+		generator_polynomial);
+
+	/* Instantiate Encoder and Decoder (Codec) */
+	schifra::reed_solomon::encoder<code_length,fec_length> encoder(field,generator_polynomial);
+
+	 RS_String += std::string(data_length - RS_String.length(),static_cast<unsigned char>(0x00));
+
+	 /* Instantiate RS Block For Codec */
+	 schifra::reed_solomon::block<code_length,fec_length> block;
+
+	 /* Transform message into Reed-Solomon encoded codeword */
+	 if (!encoder.encode(RS_String,block))
+	 {
+		 //std::cout << "Error - Critical encoding failure!" << std::endl;
+		 AfxMessageBox(_T("Error - Critical encoding failure!"));
+		 return;
+	 }
+
+	 block.data_to_string(RS_String);
+	 std::string checkString(fec_length,' ');
+	 block.fec_to_string(checkString);
+	 //result'size is 127 bytes
+	 RS_String += checkString;
+}
+
+//Extract watermark to RS_String
+static void fromImageToRS_String()
+{
+	RS_String.clear();
+	ASSERT(RS_String.length() == 0);
+}
+
+static void RS_Deconde()
+{
+	//not test
+	fromImageToRS_String();
+
+	std::string checkString = RS_String.substr(117);
+	RS_String.erase(RS_String.begin()+117,RS_String.end());
+
+	/* Finite Field Parameters */
+	const std::size_t field_descriptor                 =   7;
+	const std::size_t generator_polynommial_index      =   0;
+	const std::size_t generator_polynommial_root_count =  10;
+
+	/* Reed Solomon Code Parameters */
+	const std::size_t code_length = 127;
+	const std::size_t fec_length  =  10;
+	const std::size_t data_length = code_length - fec_length;
+
+	/* Instantiate Finite Field and Generator Polynomials */
+	schifra::galois::field field(field_descriptor,
+		schifra::galois::primitive_polynomial_size04,
+		schifra::galois::primitive_polynomial04);
+
+	schifra::galois::field_polynomial generator_polynomial(field);
+
+	schifra::sequential_root_generator_polynomial_creator(field,
+		generator_polynommial_index,
+		generator_polynommial_root_count,
+		generator_polynomial);
+	
+	/* Instantiate Decoder (Codec) */
+	schifra::reed_solomon::decoder<code_length,fec_length> decoder(field,generator_polynommial_index);
+
+	/* Instantiate RS Block For Codec */
+	schifra::reed_solomon::block<code_length,fec_length> block(RS_String,checkString);
+
+	if (!decoder.decode(block))
+	{
+		//std::cout << "Error - Critical decoding failure!" << std::endl;
+		AfxMessageBox(_T("Error - Critical decoding failure!"));
+		return;
+	}
+	// decode successfully
+
+	//117 bytes
+	block.data_to_string(RS_String); 
+
+	fromRS_StringToWaterMark();
+}
+
 void CImageDigitalMarkingDlg::OnBnClickedButton4()
 {
 	// TODO: Add your control notification handler code here
@@ -420,7 +587,9 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 		{
 			return;
 		}
-
+		
+		// rs error correct code
+		RS_Encode(waterMark);
 
 	} 
 	else //ÌáÈ¡Ë®Ó¡

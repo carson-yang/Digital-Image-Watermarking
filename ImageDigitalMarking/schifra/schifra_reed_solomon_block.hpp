@@ -45,14 +45,14 @@ namespace schifra
          typedef traits::reed_solomon_triat<code_length,fec_length,data_length> trait;
          typedef traits::symbol<code_length> symbol;
 
-         block()
-         : errors_detected (0),
-           errors_corrected(0),
-           zero_numerators (0),
-           unrecoverable(false)
-         {
-            traits::validate_reed_solomon_block_parameters<code_length,fec_length,data_length>();
-         }
+		 block()
+			 : errors_detected (0),
+			 errors_corrected(0),
+			 zero_numerators (0),
+			 unrecoverable(false)
+		 {
+			 traits::validate_reed_solomon_block_parameters<code_length,fec_length,data_length>();
+		 }
 
          block(const std::string& _data, const std::string& _fec)
          : errors_detected (0),
