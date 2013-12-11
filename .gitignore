@@ -6,6 +6,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
+*/lib/
 
 # Compiled Static libraries
 *.lai

@@ -3,13 +3,22 @@
 //
 
 #include "stdafx.h"
+#include <cstddef>
+#include <string>
 #include "ImageDigitalMarking.h"
 #include "ImageDigitalMarkingDlg.h"
 #include "afxdialogex.h"
 #include "MD5.h"
 #include "PasswordInput.h"
-#include <vector>
+#include "WaterMarkingInputDlg.h"
 #include "opencv2/core/core.hpp"
+#include "schifra/schifra_galois_field.hpp"
+#include "schifra/schifra_galois_field_polynomial.hpp"
+#include "schifra/schifra_sequential_root_generator_polynomial_creator.hpp"
+#include "schifra/schifra_reed_solomon_encoder.hpp"
+#include "schifra/schifra_reed_solomon_decoder.hpp"
+#include "schifra/schifra_reed_solomon_block.hpp"
+#include "schifra/schifra_error_processes.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -231,8 +240,12 @@ void CImageDigitalMarkingDlg::On32774()
 
 void CImageDigitalMarkingDlg::setPassword(CString& pass)
 {
-	//strcpy_s(this->password,32,password);
 	this->password = pass;
+}
+
+void CImageDigitalMarkingDlg::setWaterMarking(CString& watermark)
+{
+	this->waterMarking = watermark;
 }
 
 void computePertumation(CString& initPassword)
@@ -324,24 +337,26 @@ void DCT(int height, int width,int flag)
 				{
 					BitMapData[x+i][y+j].Cb = cvData(i,j);
 				}
-			
 		}
-		
 	}
 }
 
-void CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
+bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 {
 	if (myImage.IsNull())
 	{
 		AfxMessageBox(_T("请先选择图片"));
-		return;
+		return false;
 	}
 	//input password
 	PasswordInput inputDialog;
-	inputDialog.pDialog = this;
+	inputDialog.setMainDialog(this);
 	inputDialog.DoModal();
 
+	if (password.GetLength() == 0)
+	{
+		return false;
+	}
 	int imageWidth = myImage.GetWidth();
 	int imageHeight = myImage.GetHeight();
 
@@ -370,6 +385,8 @@ void CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 
 	//every block DCT
 	DCT(imageHeight,imageWidth,0); 
+
+	return true;
 }
 
 void CImageDigitalMarkingDlg::OnBnClickedButton4()
@@ -377,15 +394,27 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 	// TODO: Add your control notification handler code here
 
 	//common handle
-	commonBehaviorOfHandleImage();
-
+	if (!commonBehaviorOfHandleImage())
+	{
+		return;
+	}
+	
 	//different handle
 	CString textContent;
 	handleImage.GetWindowText(textContent);
 	CString constContent(_T("嵌入水印"));
 	if (textContent == constContent)
 	{
-		
+		WaterMarkingInputDlg waterMarkInput;
+		waterMarkInput.setMainDialog(this);
+		waterMarkInput.DoModal();
+
+		if (waterMarking.GetLength() == 0)
+		{
+			return;
+		}
+
+
 	} 
 	else //提取水印
 	{

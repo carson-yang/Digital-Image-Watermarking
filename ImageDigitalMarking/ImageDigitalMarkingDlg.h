@@ -46,12 +46,14 @@ public:
 private:
 	CButton handleImage;
 	CImage myImage;
-	void commonBehaviorOfHandleImage();
+	bool commonBehaviorOfHandleImage();
 	//char* password;
 	CString password;
+	CString waterMarking;
 public:
 	afx_msg void On32773();
 	afx_msg void On32774();
 	afx_msg void OnBnClickedButton4();
 	void setPassword(CString&);
+	void setWaterMarking(CString&);
 };

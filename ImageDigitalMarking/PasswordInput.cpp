@@ -35,6 +35,10 @@ END_MESSAGE_MAP()
 
 // PasswordInput message handlers
 
+void PasswordInput::setMainDialog(CImageDigitalMarkingDlg* pMain)
+{
+	this->pDialog = pMain;
+}
 
 void PasswordInput::OnBnClickedOk()
 {
