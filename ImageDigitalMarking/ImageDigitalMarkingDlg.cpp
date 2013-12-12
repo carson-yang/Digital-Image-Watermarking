@@ -398,12 +398,94 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 	return true;
 }
 
-static inline void RS_Initialize()
+//Extract watermark to Show(or output to a *.txt file)
+static void fromRS_StringToWaterMark()
 {
-
+	std::string additionString = RS_String.substr(96,14);
+	int count = 0;
+	std::string result;
+	for (int i = 1; i <= 96;++i )
+	{
+		additionString[count] <<= 1;
+		RS_String[i-1] |=  (additionString[count] & 0x80);
+		if (0 == i % 7)
+		{
+			count++;
+		}
+		char temp[10];
+		sprintf_s(temp,"%x",RS_String[i-1]);
+		if (RS_String[i-1] < 0)
+		{
+			result.push_back(temp[6]);
+			result.push_back(temp[7]);
+		}
+		else
+		{
+			result.push_back(temp[0]);
+			result.push_back(temp[1]);
+		}
+	}
+	generateFile(_T("请选择水印输出目录"),_T("水印提取成功"),_T("\\ExtractWaterMark.txt"),result);
 }
 
-static void fromWaterMarkToRS_String(CString& watermark)
+//Extract watermark to RS_String
+static void fromImageToRS_String()
+{
+	RS_String.clear();
+	ASSERT(RS_String.length() == 0);
+}
+
+static void RS_Deconde()
+{
+	//not test
+	//fromImageToRS_String();
+
+	std::string checkString = RS_String.substr(117);
+	RS_String.erase(RS_String.begin()+117,RS_String.end());
+
+	/* Finite Field Parameters */
+	const std::size_t field_descriptor                 =   7;
+	const std::size_t generator_polynommial_index      =   0;
+	const std::size_t generator_polynommial_root_count =  10;
+
+	/* Reed Solomon Code Parameters */
+	const std::size_t code_length = 127;
+	const std::size_t fec_length  =  10;
+	const std::size_t data_length = code_length - fec_length;
+
+	/* Instantiate Finite Field and Generator Polynomials */
+	schifra::galois::field field(field_descriptor,
+		schifra::galois::primitive_polynomial_size04,
+		schifra::galois::primitive_polynomial04);
+
+	schifra::galois::field_polynomial generator_polynomial(field);
+
+	schifra::sequential_root_generator_polynomial_creator(field,
+		generator_polynommial_index,
+		generator_polynommial_root_count,
+		generator_polynomial);
+
+	/* Instantiate Decoder (Codec) */
+	schifra::reed_solomon::decoder<code_length,fec_length> decoder(field,generator_polynommial_index);
+
+	/* Instantiate RS Block For Codec */
+	schifra::reed_solomon::block<code_length,fec_length> block(RS_String,checkString);
+
+	if (!decoder.decode(block))
+	{
+		//std::cout << "Error - Critical decoding failure!" << std::endl;
+		AfxMessageBox(_T("Error - Critical decoding failure!"));
+		return;
+	}
+	// decode successfully
+
+	//117 bytes
+	block.data_to_string(RS_String); 
+
+	fromRS_StringToWaterMark();
+}
+
+static void RS_Encode(CString& watermark)
 {
 	RS_String.clear();
 	ASSERT(RS_String.length() == 0);
@@ -449,17 +531,6 @@ static void fromWaterMarkToRS_String(CString& watermark)
 	}
 	//addition string
 	RS_String += additionString;
-}
-
-//Extract watermark to Show(or output to a *.txt file)
-static void fromRS_StringToWaterMark()
-{
-
-}
-
-static void RS_Encode(CString& watermark)
-{
-	fromWaterMarkToRS_String(watermark);
 
 	/* Finite Field Parameters */
 	const std::size_t field_descriptor                 =   7;
@@ -504,63 +575,8 @@ static void RS_Encode(CString& watermark)
 	 block.fec_to_string(checkString);
 	 //result'size is 127 bytes
 	 RS_String += checkString;
-}
 
-//Extract watermark to RS_String
-static void fromImageToRS_String()
-{
-	RS_String.clear();
-	ASSERT(RS_String.length() == 0);
-}
-
-static void RS_Deconde()
-{
-	//not test
-	fromImageToRS_String();
-
-	std::string checkString = RS_String.substr(117);
-	RS_String.erase(RS_String.begin()+117,RS_String.end());
-
-	/* Finite Field Parameters */
-	const std::size_t field_descriptor                 =   7;
-	const std::size_t generator_polynommial_index      =   0;
-	const std::size_t generator_polynommial_root_count =  10;
-
-	/* Reed Solomon Code Parameters */
-	const std::size_t code_length = 127;
-	const std::size_t fec_length  =  10;
-	const std::size_t data_length = code_length - fec_length;
-
-	/* Instantiate Finite Field and Generator Polynomials */
-	schifra::galois::field field(field_descriptor,
-		schifra::galois::primitive_polynomial_size04,
-		schifra::galois::primitive_polynomial04);
-
-	schifra::galois::field_polynomial generator_polynomial(field);
-
-	schifra::sequential_root_generator_polynomial_creator(field,
-		generator_polynommial_index,
-		generator_polynommial_root_count,
-		generator_polynomial);
-	
-	/* Instantiate Decoder (Codec) */
-	schifra::reed_solomon::decoder<code_length,fec_length> decoder(field,generator_polynommial_index);
-
-	/* Instantiate RS Block For Codec */
-	schifra::reed_solomon::block<code_length,fec_length> block(RS_String,checkString);
-
-	if (!decoder.decode(block))
-	{
-		//std::cout << "Error - Critical decoding failure!" << std::endl;
-		AfxMessageBox(_T("Error - Critical decoding failure!"));
-		return;
-	}
-	// decode successfully
-
-	//117 bytes
-	block.data_to_string(RS_String); 
-
-	fromRS_StringToWaterMark();
+	 //RS_Deconde();
 }
 
 void CImageDigitalMarkingDlg::OnBnClickedButton4()
