@@ -485,7 +485,7 @@ static void RS_Deconde()
 	fromRS_StringToWaterMark();
 }
 
-static void RS_Encode(CString& watermark)
+static void fromWaterMarkToRS_String(CString& watermark)
 {
 	RS_String.clear();
 	ASSERT(RS_String.length() == 0);
@@ -496,16 +496,16 @@ static void RS_Encode(CString& watermark)
 	for (int i = 0;i <watermark.GetLength(); i+= 2)
 	{
 		//hex string to byte;
-		unsigned char temp = 0;
+		int tem = 0;
 		std::string subTemp;
 		subTemp.push_back(static_cast<char>(watermark[i]));
 		subTemp.push_back(static_cast<char>(watermark[i+1]));
-		sscanf_s(subTemp.c_str(),"%x",&temp);
-		RS_String.push_back(temp);
+		sscanf_s(subTemp.c_str(),"%x",&tem);
+		RS_String.push_back(static_cast<char>(tem));
 
 		//rs(127,117) only with 7 valid bit symbols
 		//so every byte's head(first) bit stored in addition string
-		if (1 == (temp >> 7))
+		if (1 == (tem >> 7))
 		{
 			additionStringElement |= 0x01;
 		}
@@ -531,7 +531,11 @@ static void RS_Encode(CString& watermark)
 	}
 	//addition string
 	RS_String += additionString;
+}
 
+static void RS_Encode(CString& watermark)
+{
+	fromWaterMarkToRS_String(watermark);
 	/* Finite Field Parameters */
 	const std::size_t field_descriptor                 =   7;
 	const std::size_t generator_polynommial_index      =   0;
