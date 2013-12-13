@@ -47,9 +47,11 @@ private:
 	CButton handleImage;
 	CImage myImage;
 	bool commonBehaviorOfHandleImage();
+	void generateEmbededWaterMarkImage();
 	//char* password;
 	CString password;
 	CString waterMark;
+	CString strPathName;
 public:
 	afx_msg void On32773();
 	afx_msg void On32774();

@@ -138,7 +138,7 @@ void CImageDigitalMarkingDlg::OnBnClickedButton2()
 	if(fOpenDlg.DoModal()==IDOK)
 	{
 		// Get file path
-		CString strPathName = fOpenDlg.GetPathName();
+		strPathName = fOpenDlg.GetPathName();
 		
 		myImage.Destroy();
 		myImage.Load((LPCTSTR)strPathName);
@@ -237,7 +237,7 @@ void CImageDigitalMarkingDlg::On32774()
 	watermarking[96] = '\0';
 	std::string result = MD5::bytesToHexString(watermarking,96);
 
-	generateFile(_T("选择水印输入目录"),_T("生成水印成功"),_T("\\watermarking.txt"),result);
+	generateFile(_T("选择水印输出目录"),_T("生成水印成功"),_T("\\watermarking.txt"),result);
 }
 
 void CImageDigitalMarkingDlg::setPassword(CString& pass)
@@ -250,7 +250,7 @@ void CImageDigitalMarkingDlg::setWaterMarking(CString& watermark)
 	this->waterMark = watermark;
 }
 
-void computePertumation(CString& initPassword)
+static void computePertumation(CString& initPassword)
 {
 	std::string temp = CStringA(initPassword);
 	int count = SUM_MATRIX - 1;
@@ -272,7 +272,7 @@ void computePertumation(CString& initPassword)
 	} while (count --);
 }
 
-void pertumate(int height, int width)
+static void pertumate(int height, int width)
 {
 	int count = 0;
 	for (int x = 0; x < height; x += 8){
@@ -290,7 +290,7 @@ void pertumate(int height, int width)
 	}
 }
 
-void dePertumate(int height, int width)
+static void dePertumate(int height, int width)
 {
 	int count = 0;
 	for (int x = 0; x < height; x += 8){
@@ -308,8 +308,14 @@ void dePertumate(int height, int width)
 	}
 }
 
-void DCT(int height, int width,int flag)
+static void DCT(int height, int width,int flag)
 {
+
+	//test code
+	//double data[1100][6];
+	//memset(data,0,sizeof(data));
+	//int count = 0;
+	//double sum = 0.0;
 	for (int x = 0; x < height; x += 8){
 		for (int y = 0; y < width; y += 8)
 		{
@@ -339,8 +345,19 @@ void DCT(int height, int width,int flag)
 				{
 					BitMapData[x+i][y+j].Cr = cvData(i,j);
 				}
+			/*data[count][0] = cvData(0,1);
+			data[count][1] = cvData(1,0);
+			data[count][2] = cvData(0,1) - cvData(1,0);
+			data[count][3] = cvData(0,2);
+			data[count][4] = cvData(2,0);
+			data[count][5] = cvData(0,2) - cvData(2,0);
+			sum += fabs(data[count][2]);
+			sum += fabs(data[count][5]);
+			count++;*/
 		}
 	}
+
+	//double avg = sum / 2048;
 }
 
 bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
@@ -393,7 +410,7 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 	pertumate(imageHeight,imageWidth);
 
 	//every block DCT
-	DCT(imageHeight,imageWidth,0); 
+	DCT(imageHeight,imageWidth,0);
 
 	return true;
 }
@@ -403,7 +420,8 @@ static void fromRS_StringToWaterMark()
 {
 	std::string additionString = RS_String.substr(96,14);
 	int count = 0;
-	std::string result;
+	//std::string result;
+	byte watermarking[100];
 	for (int i = 1; i <= 96;++i )
 	{
 		additionString[count] <<= 1;
@@ -412,34 +430,77 @@ static void fromRS_StringToWaterMark()
 		{
 			count++;
 		}
-		char temp[10];
-		sprintf_s(temp,"%x",RS_String[i-1]);
-		if (RS_String[i-1] < 0)
-		{
-			result.push_back(temp[6]);
-			result.push_back(temp[7]);
-		}
-		else
-		{
-			result.push_back(temp[0]);
-			result.push_back(temp[1]);
-		}
+		watermarking[i-1] = static_cast<byte>(RS_String[i-1]);
 	}
+	
+	watermarking[96] = '\0';
+	std::string result = MD5::bytesToHexString(watermarking,96);
+
 	generateFile(_T("请选择水印输出目录"),_T("水印提取成功"),_T("\\ExtractWaterMark.txt"),result);
 }
 
 //Extract watermark to RS_String
-static void fromImageToRS_String()
+static void fromImageToRS_String(int height, int width)
 {
 	RS_String.clear();
 	ASSERT(RS_String.length() == 0);
+	char temp = 0;
+	int count = 1;
+	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+	int numStatics[3];
+
+	for (int x = 0; x < height; x+= 8)
+	{
+		for (int y = 0; y < width; y+= 8)
+		{
+			bool bit = false;
+			memset(numStatics,0,sizeof(numStatics));
+
+			if (BitMapData[x][y+1].Cr > BitMapData[x+1][y].Cr)
+			{
+				numStatics[1]++;
+			}
+			else
+				numStatics[0]++;
+
+			if (BitMapData[x][y+2].Cr > BitMapData[x+2][y].Cr)
+			{
+				numStatics[1]++;
+			}
+			else
+				numStatics[0]++;
+
+			if (BitMapData[x+1][y+1].Cr > 0)
+			{
+				numStatics[1]++;
+			}
+			else
+				numStatics[0]++;
+
+			if (numStatics[1] > numStatics[0])
+			{
+				bit = true;
+			}
+
+			if (bit)
+			{
+				temp |= singleBit[count];
+			}
+	
+			if (count == 8)
+			{
+				RS_String.push_back(temp);
+				if (RS_String.size() == 127) return;
+				count = 0;
+				temp = 0;
+			}
+			count++;
+		}
+	}
 }
 
 static void RS_Deconde()
 {
-	//not test
-	//fromImageToRS_String();
-
 	std::string checkString = RS_String.substr(117);
 	RS_String.erase(RS_String.begin()+117,RS_String.end());
 
@@ -583,6 +644,92 @@ static void RS_Encode(CString& watermark)
 	 //RS_Deconde();
 }
 
+static void fromRS_StringToImage(int height, int width)
+{
+	int count = 1;
+	int index = 0;
+	const double CC = 1.7;
+	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+	for (int x = 0; x < height; x+= 8)
+	{
+		for (int y = 0; y < width; y+= 8)
+		{
+			bool bit = ( (RS_String[index] & singleBit[count]) == singleBit[count] ) ? true : false;
+
+			if (fabs(BitMapData[x][y+1].Cr - BitMapData[x+1][y].Cr) < CC)
+			{
+				BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr ? BitMapData[x][y+1].Cr -= CC : BitMapData[x+1][y].Cr -= CC;
+			}
+
+			if (fabs(BitMapData[x][y+2].Cr - BitMapData[x+2][y].Cr) < CC)
+			{
+				BitMapData[x][y+2].Cr < BitMapData[x+2][y].Cr ? BitMapData[x][y+2].Cr -= CC : BitMapData[x+2][y].Cr -= CC;
+			}
+
+			if (bit)
+			{
+				if (BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr)
+				{
+					std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+				}
+				if (BitMapData[x][y+2].Cr < BitMapData[x+2][y].Cr)
+				{
+					std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+				}
+				//positive number stand for 1
+				BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr)+ 0.0001;
+			}
+			else
+			{
+				if (BitMapData[x][y+1].Cr > BitMapData[x+1][y].Cr)
+				{
+					std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+				}
+				if (BitMapData[x][y+2].Cr > BitMapData[x+2][y].Cr)
+				{
+					std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+				}
+				BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr) * (-1.0);
+			}
+
+			if (0 == count % 8)
+			{
+				index++;
+				if (index == 127)   return;
+				count = 0;
+			}
+			count++;
+		}
+	}
+}
+
+void CImageDigitalMarkingDlg::generateEmbededWaterMarkImage()
+{
+	int height = myImage.GetHeight();
+	int width = myImage.GetWidth();
+	for (int x = 0; x < height; ++x)
+	{
+		for (int y = 0 ;y < width; ++ y)
+		{
+			double R = BitMapData[x][y].Y + 1.371 * (BitMapData[x][y].Cr - 128);
+			double G = BitMapData[x][y].Y - 0.692 * (BitMapData[x][y].Cr - 128) - 0.336 * (BitMapData[x][y].Cb - 128);
+			double B = BitMapData[x][y].Y + 1.732 * (BitMapData[x][y].Cb - 128);
+			//BYTE a = static_cast<BYTE>(R);
+			myImage.SetPixelRGB(x,y,static_cast<BYTE>(R),static_cast<BYTE>(G),static_cast<BYTE>(B));
+		}
+	}
+
+	strPathName.Insert((strPathName.GetLength()-4),_T("_EmbededWaterMark"));
+
+	myImage.Save(strPathName);
+
+	CImage embededWaterMarkImage;
+	embededWaterMarkImage.Load(strPathName);
+	
+	CClientDC dc(this);
+	embededWaterMarkImage.Draw(dc.m_hDC,450,40,256,256);
+}
+
 void CImageDigitalMarkingDlg::OnBnClickedButton4()
 {
 	// TODO: Add your control notification handler code here
@@ -607,14 +754,24 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 		{
 			return;
 		}
-		
 		// rs error correct code
 		RS_Encode(waterMark);
+		
+		fromRS_StringToImage(myImage.GetHeight(),myImage.GetWidth());
+		//RS_String.clear();
+		//fromImageToRS_String(myImage.GetHeight(),myImage.GetWidth());
+		DCT(myImage.GetHeight(),myImage.GetWidth (),1);// IDCT
+
+		dePertumate(myImage.GetHeight(),myImage.GetWidth());
+
+		generateEmbededWaterMarkImage();
 
 	} 
-	else //提取水印
+	else //Extract watermark
 	{
-		
-	}
+		//what if Image don't contain waterMark
+		fromImageToRS_String(myImage.GetHeight(),myImage.GetWidth());
 
+		RS_Deconde();
+	}
 }
