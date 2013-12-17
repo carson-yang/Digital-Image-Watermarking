@@ -313,14 +313,15 @@ static void dePertumate(int height, int width)
 static void DCT(int height, int width,int flag)
 {
 
-	FILE *fp = fopen("qianruDCT.txt","w");
-	FILE *fp1 = fopen("tiquDCT.txt","w");
+	//FILE *fp = fopen("qianruDCT.txt","w");
+	//FILE *fp1 = fopen("tiquDCT.txt","w");
 
 	//test code
-	double data[1100][6];
+	/*double data[1100][6];
 	memset(data,0,sizeof(data));
 	int count = 0;
-	double sum = 0.0;
+	double sum = 0.0;*/
+
 	for (int x = 0; x < height; x += 8){
 		for (int y = 0; y < width; y += 8)
 		{
@@ -336,7 +337,7 @@ static void DCT(int height, int width,int flag)
 			if (flag == 0)
 			{
 				int flags = 0;
-				if (x==0&&y==32)
+				/*if (x==0&&y==32)
 				{
 					for (int ii = 0; ii < 8;++ii)
 					{
@@ -347,9 +348,9 @@ static void DCT(int height, int width,int flag)
 						fprintf(fp1,"\n");
 					}
 					fprintf(fp1,"\n");
-				}
+				}*/
 				cv::dct(cvData,cvData,flags);
-				if (x==0&&y==32)
+				/*if (x==0&&y==32)
 				{
 					for (int ii = 0; ii < 8;++ii)
 					{
@@ -360,7 +361,7 @@ static void DCT(int height, int width,int flag)
 						fprintf(fp1,"\n");
 					}
 					fprintf(fp1,"\n");
-				}
+				}*/
 			}
 			else//IDCT
 			{
@@ -370,13 +371,14 @@ static void DCT(int height, int width,int flag)
 				
 			}
 
+			//data store to bitmapdata
 			for (int i = 0; i< 8; ++i)
 				for (int j = 0; j< 8; ++j)
 				{
 					BitMapData[x+i][y+j].B = cvData(i,j);
 				}
 
-			if (flag == 1&&x==0&&y==32)
+			/*if (flag == 1&&x==0&&y==32)
 			{
 				for (int ii = 0; ii < 8;++ii)
 				{
@@ -399,9 +401,8 @@ static void DCT(int height, int width,int flag)
 						fprintf(fp,"\n");
 					}
 					fprintf(fp,"\n");
-			}
+			}*/
 
-			//data store to bitmapdata
 			
 
 			/*data[count][0] = cvData(4,1);
@@ -455,14 +456,14 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 		for (int y = 0; y< imageWidth; ++y)
 		{
 			pixel = myImage.GetPixel(x,y);
-			if (y == 33 && x == 4)
+			/*if (y == 33 && x == 4)
 			{
 				int aa = 45;
 			}
 			if (y == 34 && x == 3)
 			{
 				int aa = 45;
-			}
+			}*/
 			r = GetRValue(pixel);
 			g = GetGValue(pixel);
 			b = GetBValue(pixel);
@@ -520,7 +521,7 @@ static void fromImageToRS_String(int height, int width)
 	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 	int numStatics[3];
 
-	FILE* fp = fopen("tiqu.txt","w");
+	//FILE* fp = fopen("tiqu.txt","w");
 
 	for (int x = 0; x < height; x+= 8)
 	{
@@ -529,7 +530,7 @@ static void fromImageToRS_String(int height, int width)
 			bool bit = false;
 			memset(numStatics,0,sizeof(numStatics));
 
-			/*if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
+			if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
 			{
 				numStatics[1]++;
 			}
@@ -555,19 +556,12 @@ static void fromImageToRS_String(int height, int width)
 				bit = true;
 			}
 
-			if (BitMapData[x][y+2].B > BitMapData[x+2][y].B)
+			/*if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
 			{
 				bit = true;
 			}
 			else
 				bit = false;*/
-
-			if (BitMapData[x+4][y+1].B > BitMapData[x+3][y+2].B)
-			{
-				bit = true;
-			}
-			else
-				bit = false;
 
 			if (bit)
 			{
@@ -582,9 +576,9 @@ static void fromImageToRS_String(int height, int width)
 				count = 0;
 				temp = 0;
 			}
-			fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
-				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
-				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
+			/*fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x][y+1].B,BitMapData[x+1][y].B,
+				BitMapData[x][y+1].B-BitMapData[x+1][y].B,BitMapData[x][y+1].B,BitMapData[x+1][y].B,
+				BitMapData[x][y+1].B-BitMapData[x+1][y].B,count);*/
 			count++;
 			if (RS_String.size() == 127) {
 				return;
@@ -742,11 +736,11 @@ static void RS_Encode(CString& watermark)
 static void fromRS_StringToImage(int height, int width)
 {
 
-	FILE* fp = fopen("qianru.txt","w");
+	//FILE* fp = fopen("qianru.txt","w");
 
 	int count = 1;
 	int index = 0;
-	const double CC = 15;
+	const double CC = 5;
 	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 	for (int x = 0; x < height; x+= 8)
 	{
@@ -754,44 +748,44 @@ static void fromRS_StringToImage(int height, int width)
 		{
 			bool bit = ( (RS_String[index] & singleBit[count]) == singleBit[count] ) ? true : false;
 
-			if (fabs(BitMapData[x][y+1].B - BitMapData[x+1][y].B) < CC)
+			if (fabs(BitMapData[x][y+2].B - BitMapData[x+2][y].B) < CC)
 			{
-				//BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr ? BitMapData[x][y+1].Cr -= CC : BitMapData[x+1][y].Cr -= CC;
+				BitMapData[x][y+2].B < BitMapData[x+2][y].B ? BitMapData[x][y+2].B -= CC : BitMapData[x+2][y].B -= CC;
 			}
 
-			if (fabs(BitMapData[x+4][y+1].B - BitMapData[x+3][y+2].B) < CC)
+			if (fabs(BitMapData[x][y+1].B - BitMapData[x+1][y].B) < CC)
 			{
-				BitMapData[x+4][y+1].B < BitMapData[x+3][y+2].B ? BitMapData[x+4][y+1].B -= CC : BitMapData[x+3][y+2].B -= CC;
+				BitMapData[x][y+1].B < BitMapData[x+1][y].B ? BitMapData[x][y+1].B -= CC : BitMapData[x+1][y].B -= CC;
 			}
 
 			if (bit)
 			{
-				if (BitMapData[x][y+1].B < BitMapData[x+1][y].B)
+				if (BitMapData[x][y+2].B < BitMapData[x+2][y].B)
 				{
-					//std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					std::swap(BitMapData[x][y+2].B,BitMapData[x+2][y].B);
 					//std::swap(BitMapData[x][y+1],BitMapData[x+1][y]);
 				}
-				if (BitMapData[x+4][y+1].B < BitMapData[x+3][y+2].B)
+				if (BitMapData[x][y+1].B < BitMapData[x+1][y].B)
 				{
 					//std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
-					std::swap(BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B);
+					std::swap(BitMapData[x][y+1].B,BitMapData[x+1][y].B);
 				}
 				//positive number stand for 1
-				//BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr)+ 0.0001;
+				BitMapData[x+1][y+1].B = fabs(BitMapData[x+1][y+1].B)+ 0.0001;
 			}
 			else
 			{
-				if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
+				if (BitMapData[x][y+2].B > BitMapData[x+2][y].B)
 				{
-					//std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					std::swap(BitMapData[x][y+2].B,BitMapData[x+2][y].B);
 					//std::swap(BitMapData[x][y+1],BitMapData[x+1][y]);
 				}
-				if (BitMapData[x+4][y+1].B > BitMapData[x+3][y+2].B)
+				if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
 				{
 					//std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
-					std::swap(BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B);
+					std::swap(BitMapData[x][y+1].B,BitMapData[x+1][y].B);
 				}
-				//BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr) * (-1.0);
+				BitMapData[x+1][y+1].B = fabs(BitMapData[x+1][y+1].B) * (-1.0);
 			}
 
 			if (0 == count % 8)
@@ -801,9 +795,9 @@ static void fromRS_StringToImage(int height, int width)
 				
 				count = 0;
 			}
-			fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
-				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
-				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
+			/*fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x][y+1].B,BitMapData[x+1][y].B,
+				BitMapData[x][y+1].B-BitMapData[x+1][y].B,BitMapData[x][y+1].B,BitMapData[x+1][y].B,
+				BitMapData[x][y+1].B-BitMapData[x+1][y].B,count);*/
 			count++;
 			if (index == 127)   return;
 		}
@@ -819,10 +813,10 @@ void CImageDigitalMarkingDlg::generateEmbededWaterMarkImage()
 		for (int y = 0 ;y < width; ++ y)
 		{
 
-			if (y == 32 && x == 0)
+			/*if (y == 32 && x == 0)
 			{
 				int aaa = 45;
-			}
+			}*/
 			//double R = BitMapData[x][y].Y + 1.371 * (BitMapData[x][y].Cr - 128);
 			//double G = BitMapData[x][y].Y - 0.692 * (BitMapData[x][y].Cr - 128) - 0.336 * (BitMapData[x][y].Cb - 128);
 			//double B = BitMapData[x][y].Y + 1.732 * (BitMapData[x][y].Cb - 128);
