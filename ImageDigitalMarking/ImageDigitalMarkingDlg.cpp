@@ -30,9 +30,9 @@
 
 struct YCrCbModel 
 {
-	double Y;
-	double Cr;
-	double Cb;
+	double R;
+	double G;
+	double B;
 }BitMapData[EDGE_LENGTH][EDGE_LENGTH];
 
 int permutation[SUM_MATRIX+10][SUBMATRIX+10];
@@ -283,10 +283,11 @@ static void pertumate(int height, int width)
 				for (int j = 0; j< 8; ++j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j].Cr,BitMapData[x+pert/8][y+pert%8].Cr);
+					std::swap(BitMapData[x+i][y+j].B,BitMapData[x+pert/8][y+pert%8].B);
 				}
+				count++;
 		}
-		count++;
+		//count++;
 	}
 }
 
@@ -301,21 +302,25 @@ static void dePertumate(int height, int width)
 				for (int j = 7; j>=0; --j)
 				{
 					pert = permutation[count][i*8+j];
-					std::swap(BitMapData[x+i][y+j].Cr,BitMapData[x+pert/8][y+pert%8].Cr);
+					std::swap(BitMapData[x+i][y+j].B,BitMapData[x+pert/8][y+pert%8].B);
 				}
+				count++;
 		}
-		count++;
+		//count++;
 	}
 }
 
 static void DCT(int height, int width,int flag)
 {
 
+	FILE *fp = fopen("qianruDCT.txt","w");
+	FILE *fp1 = fopen("tiquDCT.txt","w");
+
 	//test code
-	//double data[1100][6];
-	//memset(data,0,sizeof(data));
-	//int count = 0;
-	//double sum = 0.0;
+	double data[1100][6];
+	memset(data,0,sizeof(data));
+	int count = 0;
+	double sum = 0.0;
 	for (int x = 0; x < height; x += 8){
 		for (int y = 0; y < width; y += 8)
 		{
@@ -324,40 +329,94 @@ static void DCT(int height, int width,int flag)
 			for (int i = 0; i< 8; ++i)
 				for (int j = 0; j< 8; ++j)
 				{
-					cvData(i,j) = BitMapData[x+i][y+j].Cr;
+					cvData(i,j) = BitMapData[x+i][y+j].B;
 				}
 			
 			//DCT
 			if (flag == 0)
 			{
 				int flags = 0;
+				if (x==0&&y==32)
+				{
+					for (int ii = 0; ii < 8;++ii)
+					{
+						for (int jj = 0; jj < 8;++jj)
+						{
+							fprintf(fp1,"%f ",cvData(ii,jj));
+						}
+						fprintf(fp1,"\n");
+					}
+					fprintf(fp1,"\n");
+				}
 				cv::dct(cvData,cvData,flags);
+				if (x==0&&y==32)
+				{
+					for (int ii = 0; ii < 8;++ii)
+					{
+						for (int jj = 0; jj < 8;++jj)
+						{
+							fprintf(fp1,"%f ",cvData(ii,jj));
+						}
+						fprintf(fp1,"\n");
+					}
+					fprintf(fp1,"\n");
+				}
 			}
 			else//IDCT
 			{
 				int flags = cv::DCT_INVERSE;
+				
 				cv::dct(cvData,cvData,flags);
+				
 			}
 
-			//data store to bitmapdata
 			for (int i = 0; i< 8; ++i)
 				for (int j = 0; j< 8; ++j)
 				{
-					BitMapData[x+i][y+j].Cr = cvData(i,j);
+					BitMapData[x+i][y+j].B = cvData(i,j);
 				}
-			/*data[count][0] = cvData(0,1);
-			data[count][1] = cvData(1,0);
-			data[count][2] = cvData(0,1) - cvData(1,0);
-			data[count][3] = cvData(0,2);
-			data[count][4] = cvData(2,0);
-			data[count][5] = cvData(0,2) - cvData(2,0);
+
+			if (flag == 1&&x==0&&y==32)
+			{
+				for (int ii = 0; ii < 8;++ii)
+				{
+					for (int jj = 0; jj < 8;++jj)
+					{
+						fprintf(fp,"%f ",cvData(ii,jj));
+					}
+					fprintf(fp,"\n");
+				}
+				fprintf(fp,"\n");
+
+				cv::dct(cvData,cvData,0);
+
+					for (int ii = 0; ii < 8;++ii)
+					{
+						for (int jj = 0; jj < 8;++jj)
+						{
+							fprintf(fp,"%f ",cvData(ii,jj));
+						}
+						fprintf(fp,"\n");
+					}
+					fprintf(fp,"\n");
+			}
+
+			//data store to bitmapdata
+			
+
+			/*data[count][0] = cvData(4,1);
+			data[count][1] = cvData(3,2);
+			data[count][2] = cvData(4,1) - cvData(3,2);
+			data[count][3] = cvData(3,2);
+			data[count][4] = cvData(2,3);
+			data[count][5] = cvData(3,2) - cvData(2,3);
 			sum += fabs(data[count][2]);
-			sum += fabs(data[count][5]);
+			//sum += fabs(data[count][5]);
 			count++;*/
 		}
 	}
 
-	//double avg = sum / 2048;
+	//double avg = sum / 1024;
 }
 
 bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
@@ -396,18 +455,30 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 		for (int y = 0; y< imageWidth; ++y)
 		{
 			pixel = myImage.GetPixel(x,y);
+			if (y == 33 && x == 4)
+			{
+				int aa = 45;
+			}
+			if (y == 34 && x == 3)
+			{
+				int aa = 45;
+			}
 			r = GetRValue(pixel);
 			g = GetGValue(pixel);
 			b = GetBValue(pixel);
-			BitMapData[x][y].Y = (77.0 * r  + 150 * g  + 29 * b) / 256;
-			BitMapData[x][y].Cb = (-44.0 * r  - 87 * g  + 131 * b )/ 256 + 128;
-			BitMapData[x][y].Cr = (131.0 * r  - 110 * g  - 21 * b) / 256 + 128;
+			//BitMapData[x][y].Y = (77.0 * r  + 150 * g  + 29 * b) / 256;
+			//BitMapData[x][y].Cb = (-44.0 * r  - 87 * g  + 131 * b )/ 256 + 128;
+			//BitMapData[x][y].Cr = (131.0 * r  - 110 * g  - 21 * b) / 256 + 128;
+
+			BitMapData[x][y].R = r;
+			BitMapData[x][y].G = g;
+			BitMapData[x][y].B = b;
 		}
 	//compute pertumation
-	computePertumation(password);
+	//computePertumation(password);
 
 	//complete pertumation
-	pertumate(imageHeight,imageWidth);
+	//pertumate(imageHeight,imageWidth);
 
 	//every block DCT
 	DCT(imageHeight,imageWidth,0);
@@ -418,14 +489,14 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 //Extract watermark to Show(or output to a *.txt file)
 static void fromRS_StringToWaterMark()
 {
-	std::string additionString = RS_String.substr(96,14);
+	//std::string additionString = RS_String.substr(96,14);
 	int count = 0;
 	//std::string result;
 	byte watermarking[100];
 	for (int i = 1; i <= 96;++i )
 	{
-		additionString[count] <<= 1;
-		RS_String[i-1] |=  (additionString[count] & 0x80);
+		//additionString[count] <<= 1;
+		//RS_String[i-1] |=  (additionString[count] & 0x80);
 		if (0 == i % 7)
 		{
 			count++;
@@ -449,6 +520,8 @@ static void fromImageToRS_String(int height, int width)
 	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 	int numStatics[3];
 
+	FILE* fp = fopen("tiqu.txt","w");
+
 	for (int x = 0; x < height; x+= 8)
 	{
 		for (int y = 0; y < width; y+= 8)
@@ -456,21 +529,21 @@ static void fromImageToRS_String(int height, int width)
 			bool bit = false;
 			memset(numStatics,0,sizeof(numStatics));
 
-			if (BitMapData[x][y+1].Cr > BitMapData[x+1][y].Cr)
+			/*if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
 			{
 				numStatics[1]++;
 			}
 			else
 				numStatics[0]++;
 
-			if (BitMapData[x][y+2].Cr > BitMapData[x+2][y].Cr)
+			if (BitMapData[x][y+2].B > BitMapData[x+2][y].B)
 			{
 				numStatics[1]++;
 			}
 			else
 				numStatics[0]++;
 
-			if (BitMapData[x+1][y+1].Cr > 0)
+			if (BitMapData[x+1][y+1].B > 0)
 			{
 				numStatics[1]++;
 			}
@@ -482,6 +555,20 @@ static void fromImageToRS_String(int height, int width)
 				bit = true;
 			}
 
+			if (BitMapData[x][y+2].B > BitMapData[x+2][y].B)
+			{
+				bit = true;
+			}
+			else
+				bit = false;*/
+
+			if (BitMapData[x+4][y+1].B > BitMapData[x+3][y+2].B)
+			{
+				bit = true;
+			}
+			else
+				bit = false;
+
 			if (bit)
 			{
 				temp |= singleBit[count];
@@ -490,31 +577,38 @@ static void fromImageToRS_String(int height, int width)
 			if (count == 8)
 			{
 				RS_String.push_back(temp);
-				if (RS_String.size() == 127) return;
+				//if (RS_String.size() == 127) return;
+				
 				count = 0;
 				temp = 0;
 			}
+			fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
+				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
+				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
 			count++;
+			if (RS_String.size() == 96) {
+				return;
+			}
 		}
 	}
 }
 
 static void RS_Deconde()
 {
-	std::string checkString = RS_String.substr(117);
+	/*std::string checkString = RS_String.substr(117);
 	RS_String.erase(RS_String.begin()+117,RS_String.end());
 
-	/* Finite Field Parameters */
+	/* Finite Field Parameters *
 	const std::size_t field_descriptor                 =   7;
 	const std::size_t generator_polynommial_index      =   0;
 	const std::size_t generator_polynommial_root_count =  10;
 
-	/* Reed Solomon Code Parameters */
+	/* Reed Solomon Code Parameters *
 	const std::size_t code_length = 127;
 	const std::size_t fec_length  =  10;
 	const std::size_t data_length = code_length - fec_length;
 
-	/* Instantiate Finite Field and Generator Polynomials */
+	/* Instantiate Finite Field and Generator Polynomials *
 	schifra::galois::field field(field_descriptor,
 		schifra::galois::primitive_polynomial_size04,
 		schifra::galois::primitive_polynomial04);
@@ -526,10 +620,10 @@ static void RS_Deconde()
 		generator_polynommial_root_count,
 		generator_polynomial);
 
-	/* Instantiate Decoder (Codec) */
+	/* Instantiate Decoder (Codec) *
 	schifra::reed_solomon::decoder<code_length,fec_length> decoder(field,generator_polynommial_index);
 
-	/* Instantiate RS Block For Codec */
+	/* Instantiate RS Block For Codec *
 	schifra::reed_solomon::block<code_length,fec_length> block(RS_String,checkString);
 
 	if (!decoder.decode(block))
@@ -541,7 +635,7 @@ static void RS_Deconde()
 	// decode successfully
 
 	//117 bytes
-	block.data_to_string(RS_String); 
+	block.data_to_string(RS_String); */
 
 	fromRS_StringToWaterMark();
 }
@@ -561,8 +655,9 @@ static void fromWaterMarkToRS_String(CString& watermark)
 		std::string subTemp;
 		subTemp.push_back(static_cast<char>(watermark[i]));
 		subTemp.push_back(static_cast<char>(watermark[i+1]));
-		sscanf_s(subTemp.c_str(),"%x",&tem);
-		RS_String.push_back(static_cast<char>(tem));
+		//sscanf_s(subTemp.c_str(),"%x",&tem);
+		char chr = (char) (int) strtol(subTemp.c_str(),NULL,16);
+		RS_String.push_back(chr);
 
 		//rs(127,117) only with 7 valid bit symbols
 		//so every byte's head(first) bit stored in addition string
@@ -591,23 +686,23 @@ static void fromWaterMarkToRS_String(CString& watermark)
 		additionString.push_back(additionStringElement);
 	}
 	//addition string
-	RS_String += additionString;
+	//RS_String += additionString;
 }
 
 static void RS_Encode(CString& watermark)
 {
 	fromWaterMarkToRS_String(watermark);
 	/* Finite Field Parameters */
-	const std::size_t field_descriptor                 =   7;
+	/*const std::size_t field_descriptor                 =   7;
 	const std::size_t generator_polynommial_index      =   0;
 	const std::size_t generator_polynommial_root_count =  10;
 
-	/* Reed Solomon Code Parameters */
+	/* Reed Solomon Code Parameters 
 	const std::size_t code_length = 127;
 	const std::size_t fec_length  =  10;
 	const std::size_t data_length = code_length - fec_length;
 
-	/* Instantiate Finite Field and Generator Polynomials */
+	/* Instantiate Finite Field and Generator Polynomials 
 	schifra::galois::field field(field_descriptor,
 		schifra::galois::primitive_polynomial_size04,
 		schifra::galois::primitive_polynomial04);
@@ -619,15 +714,15 @@ static void RS_Encode(CString& watermark)
 		generator_polynommial_root_count,
 		generator_polynomial);
 
-	/* Instantiate Encoder and Decoder (Codec) */
+	/* Instantiate Encoder and Decoder (Codec) 
 	schifra::reed_solomon::encoder<code_length,fec_length> encoder(field,generator_polynomial);
 
 	 RS_String += std::string(data_length - RS_String.length(),static_cast<unsigned char>(0x00));
 
-	 /* Instantiate RS Block For Codec */
+	 /* Instantiate RS Block For Codec 
 	 schifra::reed_solomon::block<code_length,fec_length> block;
 
-	 /* Transform message into Reed-Solomon encoded codeword */
+	 /* Transform message into Reed-Solomon encoded codeword 
 	 if (!encoder.encode(RS_String,block))
 	 {
 		 //std::cout << "Error - Critical encoding failure!" << std::endl;
@@ -640,15 +735,18 @@ static void RS_Encode(CString& watermark)
 	 block.fec_to_string(checkString);
 	 //result'size is 127 bytes
 	 RS_String += checkString;
-
+	 */
 	 //RS_Deconde();
 }
 
 static void fromRS_StringToImage(int height, int width)
 {
+
+	FILE* fp = fopen("qianru.txt","w");
+
 	int count = 1;
 	int index = 0;
-	const double CC = 1.7;
+	const double CC = 15;
 	char singleBit[10]={0x00,0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 	for (int x = 0; x < height; x+= 8)
 	{
@@ -656,49 +754,58 @@ static void fromRS_StringToImage(int height, int width)
 		{
 			bool bit = ( (RS_String[index] & singleBit[count]) == singleBit[count] ) ? true : false;
 
-			if (fabs(BitMapData[x][y+1].Cr - BitMapData[x+1][y].Cr) < CC)
+			if (fabs(BitMapData[x][y+1].B - BitMapData[x+1][y].B) < CC)
 			{
-				BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr ? BitMapData[x][y+1].Cr -= CC : BitMapData[x+1][y].Cr -= CC;
+				//BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr ? BitMapData[x][y+1].Cr -= CC : BitMapData[x+1][y].Cr -= CC;
 			}
 
-			if (fabs(BitMapData[x][y+2].Cr - BitMapData[x+2][y].Cr) < CC)
+			if (fabs(BitMapData[x+4][y+1].B - BitMapData[x+3][y+2].B) < CC)
 			{
-				BitMapData[x][y+2].Cr < BitMapData[x+2][y].Cr ? BitMapData[x][y+2].Cr -= CC : BitMapData[x+2][y].Cr -= CC;
+				BitMapData[x+4][y+1].B < BitMapData[x+3][y+2].B ? BitMapData[x+4][y+1].B -= CC : BitMapData[x+3][y+2].B -= CC;
 			}
 
 			if (bit)
 			{
-				if (BitMapData[x][y+1].Cr < BitMapData[x+1][y].Cr)
+				if (BitMapData[x][y+1].B < BitMapData[x+1][y].B)
 				{
-					std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					//std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					//std::swap(BitMapData[x][y+1],BitMapData[x+1][y]);
 				}
-				if (BitMapData[x][y+2].Cr < BitMapData[x+2][y].Cr)
+				if (BitMapData[x+4][y+1].B < BitMapData[x+3][y+2].B)
 				{
-					std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+					//std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+					std::swap(BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B);
 				}
 				//positive number stand for 1
-				BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr)+ 0.0001;
+				//BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr)+ 0.0001;
 			}
 			else
 			{
-				if (BitMapData[x][y+1].Cr > BitMapData[x+1][y].Cr)
+				if (BitMapData[x][y+1].B > BitMapData[x+1][y].B)
 				{
-					std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					//std::swap(BitMapData[x][y+1].Cr,BitMapData[x+1][y].Cr);
+					//std::swap(BitMapData[x][y+1],BitMapData[x+1][y]);
 				}
-				if (BitMapData[x][y+2].Cr > BitMapData[x+2][y].Cr)
+				if (BitMapData[x+4][y+1].B > BitMapData[x+3][y+2].B)
 				{
-					std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+					//std::swap(BitMapData[x][y+2].Cr,BitMapData[x+2][y].Cr);
+					std::swap(BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B);
 				}
-				BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr) * (-1.0);
+				//BitMapData[x+1][y+1].Cr = fabs(BitMapData[x+1][y+1].Cr) * (-1.0);
 			}
 
 			if (0 == count % 8)
 			{
 				index++;
-				if (index == 127)   return;
+				//if (index == 127)   return;
+				
 				count = 0;
 			}
+			fprintf(fp,"x=%3d y=%3d  0,1=%+f 1,0=%+f chazhi=%+f   0,2=%+f 2,0=%+f chazhi=%+f  count=%d\n",x,y,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
+				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
+				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
 			count++;
+			if (index == 96)   return;
 		}
 	}
 }
@@ -711,11 +818,28 @@ void CImageDigitalMarkingDlg::generateEmbededWaterMarkImage()
 	{
 		for (int y = 0 ;y < width; ++ y)
 		{
-			double R = BitMapData[x][y].Y + 1.371 * (BitMapData[x][y].Cr - 128);
-			double G = BitMapData[x][y].Y - 0.692 * (BitMapData[x][y].Cr - 128) - 0.336 * (BitMapData[x][y].Cb - 128);
-			double B = BitMapData[x][y].Y + 1.732 * (BitMapData[x][y].Cb - 128);
+
+			if (y == 32 && x == 0)
+			{
+				int aaa = 45;
+			}
+			//double R = BitMapData[x][y].Y + 1.371 * (BitMapData[x][y].Cr - 128);
+			//double G = BitMapData[x][y].Y - 0.692 * (BitMapData[x][y].Cr - 128) - 0.336 * (BitMapData[x][y].Cb - 128);
+			//double B = BitMapData[x][y].Y + 1.732 * (BitMapData[x][y].Cb - 128);
+
 			//BYTE a = static_cast<BYTE>(R);
-			myImage.SetPixelRGB(x,y,static_cast<BYTE>(R),static_cast<BYTE>(G),static_cast<BYTE>(B));
+			BYTE B = 0;
+			if (BitMapData[x][y].B > 255)
+			{
+				B = 255;
+			}
+			else if (BitMapData[x][y].B < 0)
+			{
+				B = 0;
+			}else
+				B = static_cast<BYTE>(BitMapData[x][y].B);
+
+			myImage.SetPixelRGB(x,y,static_cast<BYTE>(BitMapData[x][y].R),static_cast<BYTE>(BitMapData[x][y].G),B);
 		}
 	}
 
@@ -762,7 +886,7 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 		//fromImageToRS_String(myImage.GetHeight(),myImage.GetWidth());
 		DCT(myImage.GetHeight(),myImage.GetWidth (),1);// IDCT
 
-		dePertumate(myImage.GetHeight(),myImage.GetWidth());
+		//dePertumate(myImage.GetHeight(),myImage.GetWidth());
 
 		generateEmbededWaterMarkImage();
 
