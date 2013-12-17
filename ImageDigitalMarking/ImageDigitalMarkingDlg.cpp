@@ -475,10 +475,10 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 			BitMapData[x][y].B = b;
 		}
 	//compute pertumation
-	//computePertumation(password);
+	computePertumation(password);
 
 	//complete pertumation
-	//pertumate(imageHeight,imageWidth);
+	pertumate(imageHeight,imageWidth);
 
 	//every block DCT
 	DCT(imageHeight,imageWidth,0);
@@ -489,14 +489,14 @@ bool CImageDigitalMarkingDlg::commonBehaviorOfHandleImage()
 //Extract watermark to Show(or output to a *.txt file)
 static void fromRS_StringToWaterMark()
 {
-	//std::string additionString = RS_String.substr(96,14);
+	std::string additionString = RS_String.substr(96,14);
 	int count = 0;
 	//std::string result;
 	byte watermarking[100];
 	for (int i = 1; i <= 96;++i )
 	{
-		//additionString[count] <<= 1;
-		//RS_String[i-1] |=  (additionString[count] & 0x80);
+		additionString[count] <<= 1;
+		RS_String[i-1] |=  (additionString[count] & 0x80);
 		if (0 == i % 7)
 		{
 			count++;
@@ -586,7 +586,7 @@ static void fromImageToRS_String(int height, int width)
 				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
 				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
 			count++;
-			if (RS_String.size() == 96) {
+			if (RS_String.size() == 127) {
 				return;
 			}
 		}
@@ -595,20 +595,20 @@ static void fromImageToRS_String(int height, int width)
 
 static void RS_Deconde()
 {
-	/*std::string checkString = RS_String.substr(117);
+	std::string checkString = RS_String.substr(117);
 	RS_String.erase(RS_String.begin()+117,RS_String.end());
 
-	/* Finite Field Parameters *
+	/* Finite Field Parameters */
 	const std::size_t field_descriptor                 =   7;
 	const std::size_t generator_polynommial_index      =   0;
 	const std::size_t generator_polynommial_root_count =  10;
 
-	/* Reed Solomon Code Parameters *
+	/* Reed Solomon Code Parameters */
 	const std::size_t code_length = 127;
 	const std::size_t fec_length  =  10;
 	const std::size_t data_length = code_length - fec_length;
 
-	/* Instantiate Finite Field and Generator Polynomials *
+	/* Instantiate Finite Field and Generator Polynomials */
 	schifra::galois::field field(field_descriptor,
 		schifra::galois::primitive_polynomial_size04,
 		schifra::galois::primitive_polynomial04);
@@ -620,10 +620,10 @@ static void RS_Deconde()
 		generator_polynommial_root_count,
 		generator_polynomial);
 
-	/* Instantiate Decoder (Codec) *
+	/* Instantiate Decoder (Codec) */
 	schifra::reed_solomon::decoder<code_length,fec_length> decoder(field,generator_polynommial_index);
 
-	/* Instantiate RS Block For Codec *
+	/* Instantiate RS Block For Codec */
 	schifra::reed_solomon::block<code_length,fec_length> block(RS_String,checkString);
 
 	if (!decoder.decode(block))
@@ -635,7 +635,7 @@ static void RS_Deconde()
 	// decode successfully
 
 	//117 bytes
-	block.data_to_string(RS_String); */
+	block.data_to_string(RS_String); 
 
 	fromRS_StringToWaterMark();
 }
@@ -655,9 +655,9 @@ static void fromWaterMarkToRS_String(CString& watermark)
 		std::string subTemp;
 		subTemp.push_back(static_cast<char>(watermark[i]));
 		subTemp.push_back(static_cast<char>(watermark[i+1]));
-		//sscanf_s(subTemp.c_str(),"%x",&tem);
-		char chr = (char) (int) strtol(subTemp.c_str(),NULL,16);
-		RS_String.push_back(chr);
+		sscanf_s(subTemp.c_str(),"%x",&tem);
+		//char chr = (char) (int) strtol(subTemp.c_str(),NULL,16);
+		RS_String.push_back(static_cast<char>(tem));
 
 		//rs(127,117) only with 7 valid bit symbols
 		//so every byte's head(first) bit stored in addition string
@@ -686,23 +686,23 @@ static void fromWaterMarkToRS_String(CString& watermark)
 		additionString.push_back(additionStringElement);
 	}
 	//addition string
-	//RS_String += additionString;
+	RS_String += additionString;
 }
 
 static void RS_Encode(CString& watermark)
 {
 	fromWaterMarkToRS_String(watermark);
 	/* Finite Field Parameters */
-	/*const std::size_t field_descriptor                 =   7;
+	const std::size_t field_descriptor                 =   7;
 	const std::size_t generator_polynommial_index      =   0;
 	const std::size_t generator_polynommial_root_count =  10;
 
-	/* Reed Solomon Code Parameters 
+	/* Reed Solomon Code Parameters */
 	const std::size_t code_length = 127;
 	const std::size_t fec_length  =  10;
 	const std::size_t data_length = code_length - fec_length;
 
-	/* Instantiate Finite Field and Generator Polynomials 
+	/* Instantiate Finite Field and Generator Polynomials */
 	schifra::galois::field field(field_descriptor,
 		schifra::galois::primitive_polynomial_size04,
 		schifra::galois::primitive_polynomial04);
@@ -714,15 +714,15 @@ static void RS_Encode(CString& watermark)
 		generator_polynommial_root_count,
 		generator_polynomial);
 
-	/* Instantiate Encoder and Decoder (Codec) 
+	/* Instantiate Encoder and Decoder (Codec) */
 	schifra::reed_solomon::encoder<code_length,fec_length> encoder(field,generator_polynomial);
 
 	 RS_String += std::string(data_length - RS_String.length(),static_cast<unsigned char>(0x00));
 
-	 /* Instantiate RS Block For Codec 
+	 /* Instantiate RS Block For Codec */
 	 schifra::reed_solomon::block<code_length,fec_length> block;
 
-	 /* Transform message into Reed-Solomon encoded codeword 
+	 /* Transform message into Reed-Solomon encoded codeword */
 	 if (!encoder.encode(RS_String,block))
 	 {
 		 //std::cout << "Error - Critical encoding failure!" << std::endl;
@@ -735,7 +735,7 @@ static void RS_Encode(CString& watermark)
 	 block.fec_to_string(checkString);
 	 //result'size is 127 bytes
 	 RS_String += checkString;
-	 */
+	 
 	 //RS_Deconde();
 }
 
@@ -805,7 +805,7 @@ static void fromRS_StringToImage(int height, int width)
 				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,BitMapData[x+4][y+1].B,BitMapData[x+3][y+2].B,
 				BitMapData[x+4][y+1].B-BitMapData[x+3][y+2].B,count);
 			count++;
-			if (index == 96)   return;
+			if (index == 127)   return;
 		}
 	}
 }
@@ -886,7 +886,7 @@ void CImageDigitalMarkingDlg::OnBnClickedButton4()
 		//fromImageToRS_String(myImage.GetHeight(),myImage.GetWidth());
 		DCT(myImage.GetHeight(),myImage.GetWidth (),1);// IDCT
 
-		//dePertumate(myImage.GetHeight(),myImage.GetWidth());
+		dePertumate(myImage.GetHeight(),myImage.GetWidth());
 
 		generateEmbededWaterMarkImage();
 

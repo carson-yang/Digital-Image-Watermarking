@@ -1,4 +1,4 @@
 ImageDigitalMarking
 ===================
 
-This is a based DCT's image digital marking Embeded software.
+This is a DCT-based image watermarking software.
