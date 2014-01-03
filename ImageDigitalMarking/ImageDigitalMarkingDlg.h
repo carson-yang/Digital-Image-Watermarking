@@ -41,8 +41,8 @@ public:
 	//HBITMAP BufferToHBITMAP();
 	//void DrawImage(int x, int y, CDC *pDC);
 public:
-	afx_msg void OnUpdate32771(CCmdUI *pCmdUI);
-	afx_msg void OnUpdate32772(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEmbeded(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateExtract(CCmdUI *pCmdUI);
 private:
 	CButton handleImage;
 	CImage myImage;
@@ -53,8 +53,8 @@ private:
 	CString waterMark;
 	CString strPathName;
 public:
-	afx_msg void On32773();
-	afx_msg void On32774();
+	afx_msg void OnPasswordGenrate();
+	afx_msg void OnWaterMarkGenerate();
 	afx_msg void OnBnClickedButton4();
 	void setPassword(CString&);
 	void setWaterMarking(CString&);

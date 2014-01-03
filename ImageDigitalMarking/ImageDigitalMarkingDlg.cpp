@@ -62,10 +62,10 @@ BEGIN_MESSAGE_MAP(CImageDigitalMarkingDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON2, &CImageDigitalMarkingDlg::OnBnClickedButton2)
-	ON_UPDATE_COMMAND_UI(ID_32771, &CImageDigitalMarkingDlg::OnUpdate32771)
-	ON_UPDATE_COMMAND_UI(ID_32772, &CImageDigitalMarkingDlg::OnUpdate32772)
-	ON_COMMAND(ID_32773, &CImageDigitalMarkingDlg::On32773)
-	ON_COMMAND(ID_32774, &CImageDigitalMarkingDlg::On32774)
+	ON_UPDATE_COMMAND_UI(ID_UpdateEmbeded, &CImageDigitalMarkingDlg::OnUpdateEmbeded)
+	ON_UPDATE_COMMAND_UI(ID_UpdateExtract, &CImageDigitalMarkingDlg::OnUpdateExtract)
+	ON_COMMAND(ID_PasswordGenrate, &CImageDigitalMarkingDlg::OnPasswordGenrate)
+	ON_COMMAND(ID_WaterMarkGenerate, &CImageDigitalMarkingDlg::OnWaterMarkGenerate)
 	ON_BN_CLICKED(IDC_BUTTON4, &CImageDigitalMarkingDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
@@ -147,13 +147,13 @@ void CImageDigitalMarkingDlg::OnBnClickedButton2()
 }
 
 
-void CImageDigitalMarkingDlg::OnUpdate32771(CCmdUI *pCmdUI)
+void CImageDigitalMarkingDlg::OnUpdateEmbeded(CCmdUI *pCmdUI)
 {
 	handleImage.SetWindowTextW(_T("嵌入水印"));
 }
 
 
-void CImageDigitalMarkingDlg::OnUpdate32772(CCmdUI *pCmdUI)
+void CImageDigitalMarkingDlg::OnUpdateExtract(CCmdUI *pCmdUI)
 {
 	handleImage.SetWindowTextW(_T("提取水印"));
 }
@@ -199,7 +199,7 @@ static void generateFile(LPCWSTR title,LPCWSTR result, LPCWSTR fileName,std::str
 }
 
 //generate password
-void CImageDigitalMarkingDlg::On32773()
+void CImageDigitalMarkingDlg::OnPasswordGenrate()
 {
 		CString currentTime = CTime::GetCurrentTime().Format("%H, %M, %S, %A, %B %d, %Y");
 		std::string stdCurrent(CW2A(currentTime.GetString()));
@@ -212,7 +212,7 @@ void CImageDigitalMarkingDlg::On32773()
 }
 
 	//generate watermarking
-void CImageDigitalMarkingDlg::On32774()
+void CImageDigitalMarkingDlg::OnWaterMarkGenerate()
 {
 	srand((unsigned int) time(NULL));
 	byte watermarking[100];
